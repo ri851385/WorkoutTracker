@@ -2,6 +2,7 @@
 @inject WorkoutSessionState State
 @inject ExerciseCatalogService CatalogService
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 
 <PageTitle>種目を選択</PageTitle>
 
@@ -106,6 +107,12 @@ else
 
     private async Task DeleteExercise(string name)
     {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"「{name}」を種目一覧から削除しますか？");
+        if (!confirmed)
+        {
+            return;
+        }
+
         await CatalogService.RemoveExerciseAsync(name);
         await ReloadCatalogAsync();
     }
