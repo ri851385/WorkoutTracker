@@ -6,6 +6,7 @@ namespace WorkoutTracker.Services;
 public class ExerciseCatalogService(LocalStorageService localStorage)
 {
     private const string CustomExercisesKey = "workout-tracker.custom-exercises";
+    private const string DeletedPresetExercisesKey = "workout-tracker.deleted-preset-exercises";
     private const string OtherCategoryName = "その他";
 
     private static readonly List<ExerciseCategory> PresetCategories =
@@ -24,12 +25,16 @@ public class ExerciseCatalogService(LocalStorageService localStorage)
     public async Task<List<ExerciseCategory>> GetCategorizedExercisesAsync()
     {
         var customExercises = await GetCustomExercisesAsync();
+        var deletedPresets = await GetDeletedPresetNamesAsync();
 
         var categories = PresetCategories
             .Select(c => new ExerciseCategory
             {
                 Name = c.Name,
-                Exercises = [.. c.Exercises, .. customExercises.Where(e => e.Category == c.Name).Select(e => e.Name)],
+                Exercises = [
+                    .. c.Exercises.Where(name => !deletedPresets.Contains(name)),
+                    .. customExercises.Where(e => e.Category == c.Name).Select(e => e.Name),
+                ],
             })
             .ToList();
 
@@ -68,9 +73,10 @@ public class ExerciseCatalogService(LocalStorageService localStorage)
 
         var resolvedCategory = string.IsNullOrWhiteSpace(category) ? OtherCategoryName : category;
 
-        var allExisting = PresetCategories.SelectMany(c => c.Exercises);
+        var deletedPresets = await GetDeletedPresetNamesAsync();
+        var activePresetNames = PresetCategories.SelectMany(c => c.Exercises).Where(n => !deletedPresets.Contains(n));
         var customExercises = await GetCustomExercisesAsync();
-        if (allExisting.Contains(trimmedName) || customExercises.Any(e => e.Name == trimmedName))
+        if (activePresetNames.Contains(trimmedName) || customExercises.Any(e => e.Name == trimmedName))
         {
             return;
         }
@@ -79,10 +85,26 @@ public class ExerciseCatalogService(LocalStorageService localStorage)
         await localStorage.SetItemAsync(CustomExercisesKey, customExercises);
     }
 
-    public async Task RemoveCustomExerciseAsync(string name)
+    public async Task RemoveExerciseAsync(string name)
     {
         var customExercises = await GetCustomExercisesAsync();
-        var updated = customExercises.Where(e => e.Name != name).ToList();
-        await localStorage.SetItemAsync(CustomExercisesKey, updated);
+        if (customExercises.Any(e => e.Name == name))
+        {
+            var updated = customExercises.Where(e => e.Name != name).ToList();
+            await localStorage.SetItemAsync(CustomExercisesKey, updated);
+            return;
+        }
+
+        var deletedPresets = await GetDeletedPresetNamesAsync();
+        if (!deletedPresets.Contains(name))
+        {
+            deletedPresets.Add(name);
+            await localStorage.SetItemAsync(DeletedPresetExercisesKey, deletedPresets);
+        }
+    }
+
+    private async Task<List<string>> GetDeletedPresetNamesAsync()
+    {
+        return await localStorage.GetItemAsync<List<string>>(DeletedPresetExercisesKey) ?? [];
     }
 }

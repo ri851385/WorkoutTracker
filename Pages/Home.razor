@@ -10,7 +10,7 @@
 
 <h1 class="page-title">WorkoutTracker</h1>
 
-@if (State.CurrentSession is not null)
+@if (State.CurrentSession is not null && State.CurrentSession.Exercises.Count > 0)
 {
     <div class="resume-banner">
         <div>

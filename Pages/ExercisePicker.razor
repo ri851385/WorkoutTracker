@@ -40,20 +40,16 @@ else
             {
                 var name = exerciseName;
                 var alreadyAdded = _addedExerciseNames.Contains(name);
-                var isCustom = _customExerciseNames.Contains(name);
                 <div class="exercise-row">
                     <button type="button" class="exercise-item @(alreadyAdded ? "added" : "")"
                             disabled="@alreadyAdded" @onclick="() => AddExercise(name)">
                         <span>@name</span>
                         <span class="exercise-item-action">@(alreadyAdded ? "追加済み" : "+")</span>
                     </button>
-                    @if (isCustom)
-                    {
-                        <button type="button" class="btn btn-outline-danger btn-sm exercise-delete"
-                                @onclick="() => DeleteCustomExercise(name)" aria-label="種目を削除">
-                            ✕
-                        </button>
-                    }
+                    <button type="button" class="btn btn-outline-danger btn-sm exercise-delete"
+                            @onclick="() => DeleteExercise(name)" aria-label="種目を削除">
+                        ✕
+                    </button>
                 </div>
             }
         </div>
@@ -64,7 +60,6 @@ else
     private List<ExerciseCategory> _categories = [];
     private List<string> _categoryNames = [];
     private HashSet<string> _addedExerciseNames = [];
-    private HashSet<string> _customExerciseNames = [];
     private string _customExerciseName = "";
     private string _customExerciseCategory = "";
     private bool _isLoading = true;
@@ -88,7 +83,6 @@ else
     private async Task ReloadCatalogAsync()
     {
         _categories = await CatalogService.GetCategorizedExercisesAsync();
-        _customExerciseNames = (await CatalogService.GetCustomExercisesAsync()).Select(e => e.Name).ToHashSet();
     }
 
     private async Task AddExercise(string name)
@@ -110,9 +104,9 @@ else
         Navigation.NavigateTo("workout");
     }
 
-    private async Task DeleteCustomExercise(string name)
+    private async Task DeleteExercise(string name)
     {
-        await CatalogService.RemoveCustomExerciseAsync(name);
+        await CatalogService.RemoveExerciseAsync(name);
         await ReloadCatalogAsync();
     }
 }
