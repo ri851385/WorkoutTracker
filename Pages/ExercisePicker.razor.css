@@ -1,11 +1,19 @@
 .custom-exercise-form {
-    display: flex;
-    gap: 0.5rem;
     margin-bottom: 1.25rem;
 }
 
-.custom-exercise-form input {
+.custom-exercise-category {
+    margin-bottom: 0.5rem;
+}
+
+.custom-exercise-input-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.custom-exercise-input-row input {
     flex: 1;
+    min-width: 0;
 }
 
 .category-title {
@@ -20,8 +28,16 @@
     gap: 0.5rem;
 }
 
+.exercise-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: stretch;
+}
+
 .exercise-item {
     display: flex;
+    flex: 1;
+    min-width: 0;
     justify-content: space-between;
     align-items: center;
     background: white;
@@ -48,4 +64,8 @@
 
 .exercise-item.added .exercise-item-action {
     color: #999;
+}
+
+.exercise-delete {
+    flex-shrink: 0;
 }

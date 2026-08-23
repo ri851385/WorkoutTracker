@@ -1,3 +1,4 @@
+using System.Text.Json;
 using WorkoutTracker.Models;
 
 namespace WorkoutTracker.Services;
@@ -18,27 +19,46 @@ public class ExerciseCatalogService(LocalStorageService localStorage)
         new() { Name = "有酸素", Exercises = ["ランニング", "ウォーキング", "サイクリング", "縄跳び"] },
     ];
 
+    public List<string> GetCategoryNames() => [.. PresetCategories.Select(c => c.Name), OtherCategoryName];
+
     public async Task<List<ExerciseCategory>> GetCategorizedExercisesAsync()
     {
+        var customExercises = await GetCustomExercisesAsync();
+
         var categories = PresetCategories
-            .Select(c => new ExerciseCategory { Name = c.Name, Exercises = [.. c.Exercises] })
+            .Select(c => new ExerciseCategory
+            {
+                Name = c.Name,
+                Exercises = [.. c.Exercises, .. customExercises.Where(e => e.Category == c.Name).Select(e => e.Name)],
+            })
             .ToList();
 
-        var customExercises = await GetCustomExercisesAsync();
-        if (customExercises.Count > 0)
+        var otherExercises = customExercises.Where(e => e.Category == OtherCategoryName).Select(e => e.Name).ToList();
+        if (otherExercises.Count > 0)
         {
-            categories.Add(new ExerciseCategory { Name = OtherCategoryName, Exercises = customExercises });
+            categories.Add(new ExerciseCategory { Name = OtherCategoryName, Exercises = otherExercises });
         }
 
         return categories;
     }
 
-    public async Task<List<string>> GetCustomExercisesAsync()
+    public async Task<List<CustomExercise>> GetCustomExercisesAsync()
     {
-        return await localStorage.GetItemAsync<List<string>>(CustomExercisesKey) ?? [];
+        try
+        {
+            return await localStorage.GetItemAsync<List<CustomExercise>>(CustomExercisesKey) ?? [];
+        }
+        catch (JsonException)
+        {
+            // Migrate from the older format, which stored custom exercises as plain name strings.
+            var legacyNames = await localStorage.GetItemAsync<List<string>>(CustomExercisesKey) ?? [];
+            var migrated = legacyNames.Select(name => new CustomExercise { Name = name, Category = OtherCategoryName }).ToList();
+            await localStorage.SetItemAsync(CustomExercisesKey, migrated);
+            return migrated;
+        }
     }
 
-    public async Task AddCustomExerciseAsync(string name)
+    public async Task AddCustomExerciseAsync(string name, string category)
     {
         var trimmedName = name.Trim();
         if (string.IsNullOrEmpty(trimmedName))
@@ -46,14 +66,23 @@ public class ExerciseCatalogService(LocalStorageService localStorage)
             return;
         }
 
+        var resolvedCategory = string.IsNullOrWhiteSpace(category) ? OtherCategoryName : category;
+
         var allExisting = PresetCategories.SelectMany(c => c.Exercises);
         var customExercises = await GetCustomExercisesAsync();
-        if (allExisting.Contains(trimmedName) || customExercises.Contains(trimmedName))
+        if (allExisting.Contains(trimmedName) || customExercises.Any(e => e.Name == trimmedName))
         {
             return;
         }
 
-        customExercises.Add(trimmedName);
+        customExercises.Add(new CustomExercise { Name = trimmedName, Category = resolvedCategory });
         await localStorage.SetItemAsync(CustomExercisesKey, customExercises);
+    }
+
+    public async Task RemoveCustomExerciseAsync(string name)
+    {
+        var customExercises = await GetCustomExercisesAsync();
+        var updated = customExercises.Where(e => e.Name != name).ToList();
+        await localStorage.SetItemAsync(CustomExercisesKey, updated);
     }
 }

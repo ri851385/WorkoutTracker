@@ -16,12 +16,20 @@
 else
 {
     <div class="custom-exercise-form">
-        <input type="text" class="form-control" placeholder="種目名を入力"
-               @bind="_customExerciseName" @bind:event="oninput" />
-        <button type="button" class="btn btn-primary" @onclick="AddCustomExercise"
-                disabled="@string.IsNullOrWhiteSpace(_customExerciseName)">
-            追加
-        </button>
+        <select class="form-select custom-exercise-category" @bind="_customExerciseCategory">
+            @foreach (var category in _categoryNames)
+            {
+                <option value="@category">@category</option>
+            }
+        </select>
+        <div class="custom-exercise-input-row">
+            <input type="text" class="form-control" placeholder="種目名を入力"
+                   @bind="_customExerciseName" @bind:event="oninput" />
+            <button type="button" class="btn btn-primary" @onclick="AddCustomExercise"
+                    disabled="@string.IsNullOrWhiteSpace(_customExerciseName)">
+                追加
+            </button>
+        </div>
     </div>
 
     @foreach (var category in _categories)
@@ -32,11 +40,21 @@ else
             {
                 var name = exerciseName;
                 var alreadyAdded = _addedExerciseNames.Contains(name);
-                <button type="button" class="exercise-item @(alreadyAdded ? "added" : "")"
-                        disabled="@alreadyAdded" @onclick="() => AddExercise(name)">
-                    <span>@name</span>
-                    <span class="exercise-item-action">@(alreadyAdded ? "追加済み" : "+")</span>
-                </button>
+                var isCustom = _customExerciseNames.Contains(name);
+                <div class="exercise-row">
+                    <button type="button" class="exercise-item @(alreadyAdded ? "added" : "")"
+                            disabled="@alreadyAdded" @onclick="() => AddExercise(name)">
+                        <span>@name</span>
+                        <span class="exercise-item-action">@(alreadyAdded ? "追加済み" : "+")</span>
+                    </button>
+                    @if (isCustom)
+                    {
+                        <button type="button" class="btn btn-outline-danger btn-sm exercise-delete"
+                                @onclick="() => DeleteCustomExercise(name)" aria-label="種目を削除">
+                            ✕
+                        </button>
+                    }
+                </div>
             }
         </div>
     }
@@ -44,8 +62,11 @@ else
 
 @code {
     private List<ExerciseCategory> _categories = [];
+    private List<string> _categoryNames = [];
     private HashSet<string> _addedExerciseNames = [];
+    private HashSet<string> _customExerciseNames = [];
     private string _customExerciseName = "";
+    private string _customExerciseCategory = "";
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -58,8 +79,16 @@ else
         }
 
         _addedExerciseNames = State.CurrentSession.Exercises.Select(e => e.ExerciseName).ToHashSet();
-        _categories = await CatalogService.GetCategorizedExercisesAsync();
+        _categoryNames = CatalogService.GetCategoryNames();
+        _customExerciseCategory = _categoryNames.Count > 0 ? _categoryNames[0] : "";
+        await ReloadCatalogAsync();
         _isLoading = false;
+    }
+
+    private async Task ReloadCatalogAsync()
+    {
+        _categories = await CatalogService.GetCategorizedExercisesAsync();
+        _customExerciseNames = (await CatalogService.GetCustomExercisesAsync()).Select(e => e.Name).ToHashSet();
     }
 
     private async Task AddExercise(string name)
@@ -76,8 +105,14 @@ else
             return;
         }
 
-        await CatalogService.AddCustomExerciseAsync(name);
+        await CatalogService.AddCustomExerciseAsync(name, _customExerciseCategory);
         await State.AddExerciseAsync(name);
         Navigation.NavigateTo("workout");
+    }
+
+    private async Task DeleteCustomExercise(string name)
+    {
+        await CatalogService.RemoveCustomExerciseAsync(name);
+        await ReloadCatalogAsync();
     }
 }
