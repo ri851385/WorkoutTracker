@@ -101,8 +101,8 @@ else
         }
 
         await CatalogService.AddCustomExerciseAsync(name, _customExerciseCategory);
-        await State.AddExerciseAsync(name);
-        Navigation.NavigateTo("workout");
+        _customExerciseName = "";
+        await ReloadCatalogAsync();
     }
 
     private async Task DeleteExercise(string name)
