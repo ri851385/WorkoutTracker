@@ -1,0 +1,51 @@
+.custom-exercise-form {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.custom-exercise-form input {
+    flex: 1;
+}
+
+.category-title {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 1.2rem 0 0.5rem;
+}
+
+.exercise-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.exercise-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+    padding: 0.7rem 1rem;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.exercise-item:not(:disabled):hover {
+    border-color: #1b6ec2;
+}
+
+.exercise-item.added {
+    color: #999;
+    background: #f5f5f5;
+}
+
+.exercise-item-action {
+    font-weight: 700;
+    color: #1b6ec2;
+}
+
+.exercise-item.added .exercise-item-action {
+    color: #999;
+}

@@ -1,0 +1,25 @@
+.session-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.session-name-input {
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    border-bottom: 2px solid #ddd;
+    border-radius: 0;
+    padding-left: 0;
+}
+
+.session-name-input:focus {
+    border-color: #1b6ec2;
+    box-shadow: none;
+}
+
+.session-date {
+    font-size: 0.85rem;
+    color: #666;
+}

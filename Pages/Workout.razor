@@ -1,0 +1,85 @@
+@page "/workout"
+@inject WorkoutSessionState State
+@inject NavigationManager Navigation
+@implements IDisposable
+
+<PageTitle>トレーニング記録</PageTitle>
+
+@if (State.CurrentSession is null)
+{
+    <p class="text-muted">進行中のトレーニングがありません。</p>
+}
+else
+{
+    <div class="session-header">
+        <input type="text" class="form-control session-name-input"
+               value="@State.CurrentSession.Name" @onchange="OnNameChanged" />
+        <span class="session-date">@State.CurrentSession.Date.ToString("yyyy年M月d日 HH:mm")</span>
+    </div>
+
+    @if (State.CurrentSession.Exercises.Count == 0)
+    {
+        <p class="text-muted">まだ種目がありません。「種目を追加」から始めましょう。</p>
+    }
+    else
+    {
+        @for (var i = 0; i < State.CurrentSession.Exercises.Count; i++)
+        {
+            var index = i;
+            <ExerciseCard Exercise="State.CurrentSession.Exercises[index]"
+                          ExerciseIndex="index"
+                          OnExerciseRemoved="StateHasChanged" />
+        }
+    }
+
+    <button type="button" class="btn btn-outline-primary w-100 mb-3" @onclick="GoToExercisePicker">
+        + 種目を追加
+    </button>
+
+    @if (_errorMessage is not null)
+    {
+        <p class="text-danger small">@_errorMessage</p>
+    }
+
+    <button type="button" class="btn btn-success w-100" @onclick="CompleteWorkout">
+        トレーニングを完了
+    </button>
+}
+
+@code {
+    private string? _errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.OnChange += HandleStateChanged;
+        await State.InitializeAsync();
+        if (State.CurrentSession is null)
+        {
+            Navigation.NavigateTo("");
+        }
+    }
+
+    private async Task OnNameChanged(ChangeEventArgs e)
+    {
+        await State.UpdateSessionNameAsync(e.Value?.ToString() ?? "");
+    }
+
+    private void GoToExercisePicker() => Navigation.NavigateTo("exercises");
+
+    private async Task CompleteWorkout()
+    {
+        var success = await State.CompleteCurrentSessionAsync();
+        if (success)
+        {
+            Navigation.NavigateTo("");
+        }
+        else
+        {
+            _errorMessage = "少なくとも1つの種目と、1セット以上の記録が必要です。";
+        }
+    }
+
+    private void HandleStateChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => State.OnChange -= HandleStateChanged;
+}

@@ -1,0 +1,97 @@
+@page "/"
+@inject WorkoutSessionState State
+@inject WorkoutHistoryService HistoryService
+@inject CsvExportService CsvExportService
+@inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
+@implements IDisposable
+
+<PageTitle>WorkoutTracker</PageTitle>
+
+<h1 class="page-title">WorkoutTracker</h1>
+
+@if (State.CurrentSession is not null)
+{
+    <div class="resume-banner">
+        <div>
+            <strong>進行中のトレーニングがあります</strong>
+            <div class="text-muted small">@State.CurrentSession.Name</div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" @onclick="ResumeWorkout">
+            再開する
+        </button>
+    </div>
+}
+else
+{
+    <button type="button" class="btn btn-primary w-100 start-button" @onclick="StartWorkout">
+        今日のトレーニングを開始
+    </button>
+}
+
+<div class="history-header">
+    <h2 class="section-title">トレーニング履歴</h2>
+    @if (_history.Count > 0)
+    {
+        <div class="history-actions">
+            <a href="stats" class="btn btn-outline-secondary btn-sm">統計を見る</a>
+            <button type="button" class="btn btn-outline-secondary btn-sm" @onclick="ExportCsv">
+                CSVエクスポート
+            </button>
+        </div>
+    }
+</div>
+
+@if (_isLoading)
+{
+    <p class="text-muted">読み込み中...</p>
+}
+else if (_history.Count == 0)
+{
+    <p class="text-muted">まだ履歴がありません。</p>
+}
+else
+{
+    @foreach (var session in _history)
+    {
+        <HistoryListItem Session="session" />
+    }
+}
+
+@code {
+    private List<WorkoutSession> _history = [];
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        State.OnChange += HandleStateChanged;
+        await State.InitializeAsync();
+        await LoadHistoryAsync();
+    }
+
+    private async Task LoadHistoryAsync()
+    {
+        _isLoading = true;
+        _history = await HistoryService.GetAllAsync();
+        _isLoading = false;
+    }
+
+    private async Task StartWorkout()
+    {
+        await State.StartNewSessionAsync();
+        Navigation.NavigateTo("workout");
+    }
+
+    private void ResumeWorkout() => Navigation.NavigateTo("workout");
+
+    private async Task ExportCsv()
+    {
+        var csv = CsvExportService.BuildHistoryCsv(_history);
+        var fileName = $"workout-history-{DateTime.Now:yyyyMMdd-HHmmss}.csv";
+        await JSRuntime.InvokeVoidAsync("workoutTrackerDownloadCsv", fileName, csv);
+    }
+
+    private void HandleStateChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => State.OnChange -= HandleStateChanged;
+}

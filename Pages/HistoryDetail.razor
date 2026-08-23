@@ -1,0 +1,61 @@
+@page "/history/{Id:guid}"
+@inject WorkoutHistoryService HistoryService
+
+<PageTitle>トレーニング詳細</PageTitle>
+
+<a href="" class="back-link">← 履歴一覧に戻る</a>
+
+@if (_isLoading)
+{
+    <p class="text-muted">読み込み中...</p>
+}
+else if (_session is null)
+{
+    <p class="text-muted">該当するトレーニングが見つかりませんでした。</p>
+}
+else
+{
+    <h1 class="page-title">@_session.Name</h1>
+    <p class="session-date">@_session.Date.ToString("yyyy年M月d日 HH:mm")</p>
+
+    @foreach (var exercise in _session.Exercises)
+    {
+        <div class="exercise-card">
+            <h2 class="exercise-name">@exercise.ExerciseName</h2>
+            <table class="set-table">
+                <thead>
+                    <tr>
+                        <th>セット</th>
+                        <th>重量</th>
+                        <th>回数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < exercise.Sets.Count; i++)
+                    {
+                        var set = exercise.Sets[i];
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td>@(set.Weight) kg</td>
+                            <td>@(set.Reps) 回</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+
+    private WorkoutSession? _session;
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _session = await HistoryService.GetByIdAsync(Id);
+        _isLoading = false;
+    }
+}

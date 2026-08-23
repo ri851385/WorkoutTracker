@@ -1,0 +1,14 @@
+<a class="history-item" href="@($"history/{Session.Id}")">
+    <div class="history-item-name">@Session.Name</div>
+    <div class="history-item-date">@Session.Date.ToString("yyyy年M月d日 HH:mm")</div>
+    <div class="history-item-summary">
+        種目 @Session.Exercises.Count 種目 / セット @TotalSetCount セット
+    </div>
+</a>
+
+@code {
+    [Parameter, EditorRequired]
+    public required WorkoutSession Session { get; set; }
+
+    private int TotalSetCount => Session.Exercises.Sum(e => e.Sets.Count);
+}

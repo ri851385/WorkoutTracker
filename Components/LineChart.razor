@@ -1,0 +1,110 @@
+@if (Points.Count == 0)
+{
+    <p class="text-muted">データがありません。</p>
+}
+else
+{
+    <div class="line-chart">
+        <svg viewBox="0 0 @ViewBoxWidth @ViewBoxHeight" preserveAspectRatio="xMidYMid meet">
+            <line x1="@PaddingLeft" y1="@(ViewBoxHeight - PaddingBottom)" x2="@(ViewBoxWidth - PaddingRight)" y2="@(ViewBoxHeight - PaddingBottom)" class="axis-line" />
+            <line x1="@PaddingLeft" y1="@PaddingTop" x2="@PaddingLeft" y2="@(ViewBoxHeight - PaddingBottom)" class="axis-line" />
+
+            @SvgText(PaddingLeft - 4, PaddingTop + 4, "end", FormatValue(_maxValue))
+            @SvgText(PaddingLeft - 4, ViewBoxHeight - PaddingBottom + 4, "end", FormatValue(_minValue))
+
+            <polyline points="@PolylinePoints" class="chart-line" />
+
+            @for (var i = 0; i < Points.Count; i++)
+            {
+                var index = i;
+                var (x, y) = GetXy(index);
+                <circle cx="@Fmt(x)" cy="@Fmt(y)" r="3.5" class="chart-point">
+                    <title>@Points[index].Date.ToString("yyyy/M/d") : @FormatValue(Points[index].Value)</title>
+                </circle>
+                @if (ShouldShowLabel(index))
+                {
+                    @SvgText(x, ViewBoxHeight - PaddingBottom + 16, "middle", Points[index].Date.ToString("M/d"))
+                }
+            }
+        </svg>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required List<ChartPoint> Points { get; set; }
+
+    [Parameter]
+    public string ValueSuffix { get; set; } = "";
+
+    private const int ViewBoxWidth = 320;
+    private const int ViewBoxHeight = 180;
+    private const int PaddingLeft = 36;
+    private const int PaddingRight = 12;
+    private const int PaddingTop = 12;
+    private const int PaddingBottom = 28;
+
+    private decimal _minValue;
+    private decimal _maxValue;
+
+    protected override void OnParametersSet()
+    {
+        if (Points.Count == 0)
+        {
+            return;
+        }
+
+        _minValue = Points.Min(p => p.Value);
+        _maxValue = Points.Max(p => p.Value);
+        if (_minValue == _maxValue)
+        {
+            _minValue -= 1;
+            _maxValue += 1;
+        }
+    }
+
+    private (double X, double Y) GetXy(int index)
+    {
+        var innerWidth = ViewBoxWidth - PaddingLeft - PaddingRight;
+        var innerHeight = ViewBoxHeight - PaddingTop - PaddingBottom;
+
+        var x = Points.Count == 1
+            ? PaddingLeft + innerWidth / 2.0
+            : PaddingLeft + (innerWidth * index / (double)(Points.Count - 1));
+
+        var ratio = (double)((Points[index].Value - _minValue) / (_maxValue - _minValue));
+        var y = PaddingTop + (innerHeight * (1 - ratio));
+
+        return (x, y);
+    }
+
+    private string PolylinePoints => string.Join(" ", Enumerable.Range(0, Points.Count).Select(i =>
+    {
+        var (x, y) = GetXy(i);
+        return $"{Fmt(x)},{Fmt(y)}";
+    }));
+
+    private bool ShouldShowLabel(int index)
+    {
+        if (Points.Count <= 6)
+        {
+            return true;
+        }
+
+        var step = (int)Math.Ceiling(Points.Count / 6.0);
+        return index % step == 0 || index == Points.Count - 1;
+    }
+
+    private static string Fmt(double value) => value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+    private string FormatValue(decimal value) => $"{value:0.#}{ValueSuffix}";
+
+    // Razor treats a literal <text> tag as its own markup-transition directive and rejects
+    // attributes on it, so the SVG <text> element has to be emitted as raw markup instead.
+    private static MarkupString SvgText(double x, double y, string anchor, string content)
+    {
+        var encoded = System.Net.WebUtility.HtmlEncode(content);
+        var markup = $"<text x=\"{Fmt(x)}\" y=\"{Fmt(y)}\" class=\"axis-label\" text-anchor=\"{anchor}\">{encoded}</text>";
+        return new MarkupString(markup);
+    }
+}

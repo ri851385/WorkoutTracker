@@ -1,0 +1,58 @@
+@inject WorkoutSessionState State
+
+<div class="exercise-card">
+    <div class="exercise-header">
+        <h2 class="exercise-name">@Exercise.ExerciseName</h2>
+        <button type="button" class="btn btn-outline-danger btn-sm exercise-remove" @onclick="RemoveExercise" aria-label="種目を削除">
+            ✕
+        </button>
+    </div>
+
+    @if (Exercise.Sets.Count > 0)
+    {
+        <div class="set-list">
+            @for (var i = 0; i < Exercise.Sets.Count; i++)
+            {
+                var setIndex = i;
+                <SetRow Set="Exercise.Sets[setIndex]"
+                        ExerciseIndex="ExerciseIndex"
+                        SetIndex="setIndex"
+                        SetNumber="setIndex + 1"
+                        OnSetRemoved="HandleSetChanged" />
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-muted small mb-2">セットがありません。</p>
+    }
+
+    <button type="button" class="btn btn-outline-primary btn-sm w-100" @onclick="AddSet">
+        + セットを追加
+    </button>
+</div>
+
+@code {
+    [Parameter, EditorRequired]
+    public required WorkoutExerciseEntry Exercise { get; set; }
+
+    [Parameter]
+    public int ExerciseIndex { get; set; }
+
+    [Parameter]
+    public EventCallback OnExerciseRemoved { get; set; }
+
+    private void HandleSetChanged() => StateHasChanged();
+
+    private async Task AddSet()
+    {
+        await State.AddSetAsync(ExerciseIndex);
+        StateHasChanged();
+    }
+
+    private async Task RemoveExercise()
+    {
+        await State.RemoveExerciseAsync(ExerciseIndex);
+        await OnExerciseRemoved.InvokeAsync();
+    }
+}

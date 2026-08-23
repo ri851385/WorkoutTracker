@@ -1,0 +1,32 @@
+.line-chart {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+}
+
+.line-chart svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.axis-line {
+    stroke: #ccc;
+    stroke-width: 1;
+}
+
+.chart-line {
+    fill: none;
+    stroke: #1b6ec2;
+    stroke-width: 2;
+}
+
+.chart-point {
+    fill: #1b6ec2;
+}
+
+.axis-label {
+    font-size: 8px;
+    fill: #666;
+}

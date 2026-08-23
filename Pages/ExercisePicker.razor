@@ -1,0 +1,83 @@
+@page "/exercises"
+@inject WorkoutSessionState State
+@inject ExerciseCatalogService CatalogService
+@inject NavigationManager Navigation
+
+<PageTitle>種目を選択</PageTitle>
+
+<a href="workout" class="back-link">← トレーニングに戻る</a>
+
+<h1 class="page-title">種目を選択</h1>
+
+@if (_isLoading)
+{
+    <p class="text-muted">読み込み中...</p>
+}
+else
+{
+    <div class="custom-exercise-form">
+        <input type="text" class="form-control" placeholder="種目名を入力"
+               @bind="_customExerciseName" @bind:event="oninput" />
+        <button type="button" class="btn btn-primary" @onclick="AddCustomExercise"
+                disabled="@string.IsNullOrWhiteSpace(_customExerciseName)">
+            追加
+        </button>
+    </div>
+
+    @foreach (var category in _categories)
+    {
+        <h2 class="category-title">@category.Name</h2>
+        <div class="exercise-list">
+            @foreach (var exerciseName in category.Exercises)
+            {
+                var name = exerciseName;
+                var alreadyAdded = _addedExerciseNames.Contains(name);
+                <button type="button" class="exercise-item @(alreadyAdded ? "added" : "")"
+                        disabled="@alreadyAdded" @onclick="() => AddExercise(name)">
+                    <span>@name</span>
+                    <span class="exercise-item-action">@(alreadyAdded ? "追加済み" : "+")</span>
+                </button>
+            }
+        </div>
+    }
+}
+
+@code {
+    private List<ExerciseCategory> _categories = [];
+    private HashSet<string> _addedExerciseNames = [];
+    private string _customExerciseName = "";
+    private bool _isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await State.InitializeAsync();
+        if (State.CurrentSession is null)
+        {
+            Navigation.NavigateTo("");
+            return;
+        }
+
+        _addedExerciseNames = State.CurrentSession.Exercises.Select(e => e.ExerciseName).ToHashSet();
+        _categories = await CatalogService.GetCategorizedExercisesAsync();
+        _isLoading = false;
+    }
+
+    private async Task AddExercise(string name)
+    {
+        await State.AddExerciseAsync(name);
+        Navigation.NavigateTo("workout");
+    }
+
+    private async Task AddCustomExercise()
+    {
+        var name = _customExerciseName.Trim();
+        if (string.IsNullOrEmpty(name))
+        {
+            return;
+        }
+
+        await CatalogService.AddCustomExerciseAsync(name);
+        await State.AddExerciseAsync(name);
+        Navigation.NavigateTo("workout");
+    }
+}

@@ -1,0 +1,36 @@
+.set-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0;
+}
+
+.set-number {
+    width: 1.5rem;
+    flex-shrink: 0;
+    font-weight: 600;
+    color: #666;
+    text-align: center;
+}
+
+.set-field {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex: 1;
+}
+
+.set-field input {
+    min-width: 0;
+    text-align: right;
+}
+
+.set-unit {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.set-remove {
+    flex-shrink: 0;
+}
