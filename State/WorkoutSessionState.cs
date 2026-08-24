@@ -1,9 +1,10 @@
+using Microsoft.JSInterop;
 using WorkoutTracker.Models;
 using WorkoutTracker.Services;
 
 namespace WorkoutTracker.State;
 
-public class WorkoutSessionState(LocalStorageService localStorage, WorkoutHistoryService historyService)
+public class WorkoutSessionState(LocalStorageService localStorage, WorkoutHistoryService historyService, IJSRuntime jsRuntime)
 {
     private const string CurrentSessionKey = "workout-tracker.current-session";
     private const decimal MaxWeight = 999m;
@@ -33,11 +34,26 @@ public class WorkoutSessionState(LocalStorageService localStorage, WorkoutHistor
             return;
         }
 
+        var now = await GetLocalNowAsync();
         CurrentSession = new WorkoutSession
         {
-            Name = $"{DateTime.Now:yyyy年M月d日}のトレーニング",
+            Date = now,
+            Name = $"{now:yyyy年M月d日}のトレーニング",
         };
         await SaveCurrentAsync();
+    }
+
+    private async Task<DateTime> GetLocalNowAsync()
+    {
+        try
+        {
+            var iso = await jsRuntime.InvokeAsync<string>("workoutTrackerGetLocalNow");
+            return DateTimeOffset.Parse(iso).DateTime;
+        }
+        catch (JSException)
+        {
+            return DateTime.Now;
+        }
     }
 
     public async Task UpdateSessionNameAsync(string name)
