@@ -41,7 +41,7 @@ else
             {
                 var name = exerciseName;
                 var alreadyAdded = _addedExerciseNames.Contains(name);
-                <div class="exercise-row">
+                <div class="exercise-row" @key="name">
                     <button type="button" class="exercise-item @(alreadyAdded ? "added" : "")"
                             disabled="@alreadyAdded" @onclick="() => AddExercise(name)">
                         <span>@name</span>
