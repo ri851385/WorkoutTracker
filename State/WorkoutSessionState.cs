@@ -168,6 +168,18 @@ public class WorkoutSessionState(LocalStorageService localStorage, WorkoutHistor
         return true;
     }
 
+    public async Task DiscardCurrentSessionAsync()
+    {
+        if (CurrentSession is null)
+        {
+            return;
+        }
+
+        CurrentSession = null;
+        await localStorage.RemoveItemAsync(CurrentSessionKey);
+        NotifyChange();
+    }
+
     private bool IsValidExerciseIndex(int exerciseIndex)
     {
         return CurrentSession is not null && exerciseIndex >= 0 && exerciseIndex < CurrentSession.Exercises.Count;

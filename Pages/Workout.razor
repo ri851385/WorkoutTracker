@@ -1,6 +1,7 @@
 @page "/workout"
 @inject WorkoutSessionState State
 @inject NavigationManager Navigation
+@inject IJSRuntime JSRuntime
 @implements IDisposable
 
 <PageTitle>トレーニング記録</PageTitle>
@@ -41,8 +42,12 @@ else
         <p class="text-danger small">@_errorMessage</p>
     }
 
-    <button type="button" class="btn btn-success w-100" @onclick="CompleteWorkout">
+    <button type="button" class="btn btn-success w-100 mb-3" @onclick="CompleteWorkout">
         トレーニングを完了
+    </button>
+
+    <button type="button" class="btn btn-outline-danger w-100" @onclick="DeleteWorkout">
+        このトレーニングを削除
     </button>
 }
 
@@ -77,6 +82,18 @@ else
         {
             _errorMessage = "少なくとも1つの種目と、1セット以上の記録が必要です。";
         }
+    }
+
+    private async Task DeleteWorkout()
+    {
+        var confirmed = await JSRuntime.InvokeAsync<bool>("confirm", "このトレーニングを削除しますか？記録した内容は失われます。");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await State.DiscardCurrentSessionAsync();
+        Navigation.NavigateTo("");
     }
 
     private void HandleStateChanged() => InvokeAsync(StateHasChanged);
