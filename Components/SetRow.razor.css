@@ -23,6 +23,9 @@
 .set-field input {
     min-width: 0;
     text-align: left;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
 }
 
 .set-unit {
