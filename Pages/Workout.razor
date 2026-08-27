@@ -1,4 +1,5 @@
 @page "/workout"
+@using System.Globalization
 @inject WorkoutSessionState State
 @inject NavigationManager Navigation
 @inject IJSRuntime JSRuntime
@@ -37,6 +38,16 @@ else
         + 種目を追加
     </button>
 
+    <div class="body-weight-section">
+        <label for="body-weight-input" class="body-weight-label">体重</label>
+        <div class="body-weight-field">
+            <input id="body-weight-input" type="number" inputmode="decimal" step="0.1" min="0" max="999"
+                   class="form-control" value="@State.CurrentSession.BodyWeightKg" @onchange="OnBodyWeightChanged"
+                   @key="_bodyWeightKey" />
+            <span class="set-unit">kg</span>
+        </div>
+    </div>
+
     @if (_errorMessage is not null)
     {
         <p class="text-danger small">@_errorMessage</p>
@@ -53,6 +64,7 @@ else
 
 @code {
     private string? _errorMessage;
+    private int _bodyWeightKey;
 
     protected override async Task OnInitializedAsync()
     {
@@ -70,6 +82,14 @@ else
     }
 
     private void GoToExercisePicker() => Navigation.NavigateTo("exercises");
+
+    private async Task OnBodyWeightChanged(ChangeEventArgs e)
+    {
+        var text = e.Value?.ToString();
+        decimal? weight = decimal.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out var value) ? value : null;
+        await State.UpdateBodyWeightAsync(weight);
+        _bodyWeightKey++;
+    }
 
     private async Task CompleteWorkout()
     {

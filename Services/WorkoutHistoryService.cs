@@ -24,4 +24,19 @@ public class WorkoutHistoryService(LocalStorageService localStorage)
         history.Add(session);
         await localStorage.SetItemAsync(HistoryKey, history);
     }
+
+    public async Task<WorkoutExerciseEntry?> GetLastExerciseRecordAsync(string exerciseName)
+    {
+        var history = await GetAllAsync();
+        foreach (var session in history)
+        {
+            var entry = session.Exercises.FirstOrDefault(e => e.ExerciseName == exerciseName);
+            if (entry is not null)
+            {
+                return entry;
+            }
+        }
+
+        return null;
+    }
 }

@@ -23,3 +23,32 @@
     font-size: 0.85rem;
     color: #666;
 }
+
+.body-weight-section {
+    margin-bottom: 1rem;
+}
+
+.body-weight-label {
+    display: block;
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.3rem;
+}
+
+.body-weight-field {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    max-width: 10rem;
+}
+
+.body-weight-field input {
+    min-width: 0;
+    text-align: left;
+}
+
+.body-weight-field .set-unit {
+    flex-shrink: 0;
+    font-size: 0.85rem;
+    color: #666;
+}

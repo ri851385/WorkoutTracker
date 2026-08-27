@@ -17,6 +17,10 @@ else
 {
     <h1 class="page-title">@_session.Name</h1>
     <p class="session-date">@_session.Date.ToString("yyyy年M月d日 HH:mm")</p>
+    @if (_session.CompletedDate is not null)
+    {
+        <p class="session-duration">所要時間: @FormatDuration(_session.Date, _session.CompletedDate.Value)</p>
+    }
 
     @foreach (var exercise in _session.Exercises)
     {
@@ -57,5 +61,23 @@ else
     {
         _session = await HistoryService.GetByIdAsync(Id);
         _isLoading = false;
+    }
+
+    private static string FormatDuration(DateTime start, DateTime end)
+    {
+        var minutes = (int)Math.Max(0, (end - start).TotalMinutes);
+        if (minutes < 1)
+        {
+            return "1分未満";
+        }
+
+        if (minutes < 60)
+        {
+            return $"{minutes}分";
+        }
+
+        var hours = minutes / 60;
+        var remainingMinutes = minutes % 60;
+        return remainingMinutes == 0 ? $"{hours}時間" : $"{hours}時間{remainingMinutes}分";
     }
 }

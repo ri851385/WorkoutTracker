@@ -9,6 +9,7 @@ public class WorkoutSessionState(LocalStorageService localStorage, WorkoutHistor
     private const string CurrentSessionKey = "workout-tracker.current-session";
     private const decimal MaxWeight = 999m;
     private const int MaxReps = 999;
+    private const decimal MaxBodyWeightKg = 999m;
 
     private bool _isInitialized;
 
@@ -151,6 +152,17 @@ public class WorkoutSessionState(LocalStorageService localStorage, WorkoutHistor
         await SaveCurrentAsync();
     }
 
+    public async Task UpdateBodyWeightAsync(decimal? weightKg)
+    {
+        if (CurrentSession is null)
+        {
+            return;
+        }
+
+        CurrentSession.BodyWeightKg = weightKg is null ? null : Math.Clamp(weightKg.Value, 0m, MaxBodyWeightKg);
+        await SaveCurrentAsync();
+    }
+
     public async Task<bool> CompleteCurrentSessionAsync()
     {
         if (CurrentSession is null || CurrentSession.Exercises.Count == 0 ||
@@ -159,6 +171,7 @@ public class WorkoutSessionState(LocalStorageService localStorage, WorkoutHistor
             return false;
         }
 
+        CurrentSession.CompletedDate = await GetLocalNowAsync();
         CurrentSession.IsCompleted = true;
         await historyService.AddAsync(CurrentSession);
 

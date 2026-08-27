@@ -11,31 +11,45 @@
 {
     <p class="text-muted">読み込み中...</p>
 }
-else if (_exerciseNames.Count == 0)
+else if (_exerciseNames.Count == 0 && _weightPoints.Count == 0)
 {
     <p class="text-muted">まだ記録がありません。</p>
 }
 else
 {
-    <div class="exercise-select">
-        <label for="exercise-select">種目</label>
-        <select id="exercise-select" class="form-select" @onchange="OnExerciseChanged">
-            @foreach (var name in _exerciseNames)
-            {
-                <option value="@name" selected="@(name == _selectedExercise)">@name</option>
-            }
-        </select>
-    </div>
-
-    <h2 class="section-title">最大重量の推移</h2>
-
-    @if (_points.Count == 0)
+    @if (_exerciseNames.Count > 0)
     {
-        <p class="text-muted">この種目の記録がありません。</p>
+        <div class="exercise-select">
+            <label for="exercise-select">種目</label>
+            <select id="exercise-select" class="form-select" @onchange="OnExerciseChanged">
+                @foreach (var name in _exerciseNames)
+                {
+                    <option value="@name" selected="@(name == _selectedExercise)">@name</option>
+                }
+            </select>
+        </div>
+
+        <h2 class="section-title">最大重量の推移</h2>
+
+        @if (_points.Count == 0)
+        {
+            <p class="text-muted">この種目の記録がありません。</p>
+        }
+        else
+        {
+            <LineChart Points="_points" ValueSuffix="kg" />
+        }
+    }
+
+    <h2 class="section-title">体重の推移</h2>
+
+    @if (_weightPoints.Count == 0)
+    {
+        <p class="text-muted">体重の記録がありません。</p>
     }
     else
     {
-        <LineChart Points="_points" ValueSuffix="kg" />
+        <LineChart Points="_weightPoints" ValueSuffix="kg" />
     }
 }
 
@@ -44,6 +58,7 @@ else
     private List<string> _exerciseNames = [];
     private string _selectedExercise = "";
     private List<ChartPoint> _points = [];
+    private List<ChartPoint> _weightPoints = [];
     private bool _isLoading = true;
 
     protected override async Task OnInitializedAsync()
@@ -61,6 +76,12 @@ else
             _selectedExercise = _exerciseNames[0];
             BuildPoints();
         }
+
+        _weightPoints = _history
+            .Where(s => s.BodyWeightKg.HasValue)
+            .OrderBy(s => s.Date)
+            .Select(s => new ChartPoint(s.Date, s.BodyWeightKg!.Value))
+            .ToList();
 
         _isLoading = false;
     }

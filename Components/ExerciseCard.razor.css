@@ -26,6 +26,12 @@
     flex-shrink: 0;
 }
 
+.exercise-previous {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
 .set-list {
     margin-bottom: 0.6rem;
 }

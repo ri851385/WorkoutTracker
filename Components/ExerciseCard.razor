@@ -1,4 +1,5 @@
 @inject WorkoutSessionState State
+@inject WorkoutHistoryService HistoryService
 
 <div class="exercise-card">
     <div class="exercise-header">
@@ -7,6 +8,11 @@
             ✕
         </button>
     </div>
+
+    @if (_previousRecord is not null)
+    {
+        <div class="exercise-previous">前回: @PreviousRecordText</div>
+    }
 
     @if (Exercise.Sets.Count > 0)
     {
@@ -41,6 +47,24 @@
 
     [Parameter]
     public EventCallback OnExerciseRemoved { get; set; }
+
+    private string? _loadedForExerciseName;
+    private WorkoutExerciseEntry? _previousRecord;
+
+    private string PreviousRecordText => _previousRecord is null
+        ? ""
+        : string.Join(", ", _previousRecord.Sets.Select(s => $"{s.Weight:0.#}kg×{s.Reps}"));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedForExerciseName == Exercise.ExerciseName)
+        {
+            return;
+        }
+
+        _loadedForExerciseName = Exercise.ExerciseName;
+        _previousRecord = await HistoryService.GetLastExerciseRecordAsync(Exercise.ExerciseName);
+    }
 
     private void HandleSetChanged() => StateHasChanged();
 
