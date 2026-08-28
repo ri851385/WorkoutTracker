@@ -152,6 +152,18 @@ public class WorkoutSessionState(LocalStorageService localStorage, WorkoutHistor
         await SaveCurrentAsync();
     }
 
+    public async Task UpdateExerciseNoteAsync(int exerciseIndex, string note)
+    {
+        if (CurrentSession is null || !IsValidExerciseIndex(exerciseIndex))
+        {
+            return;
+        }
+
+        var trimmedNote = note.Trim();
+        CurrentSession.Exercises[exerciseIndex].Note = string.IsNullOrEmpty(trimmedNote) ? null : trimmedNote;
+        await SaveCurrentAsync();
+    }
+
     public async Task UpdateBodyWeightAsync(decimal? weightKg)
     {
         if (CurrentSession is null)

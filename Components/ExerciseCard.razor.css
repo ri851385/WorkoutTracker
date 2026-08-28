@@ -35,3 +35,9 @@
 .set-list {
     margin-bottom: 0.6rem;
 }
+
+.exercise-note {
+    resize: vertical;
+    min-height: 2.5rem;
+    font-size: 0.9rem;
+}

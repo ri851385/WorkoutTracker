@@ -33,9 +33,12 @@
         <p class="text-muted small mb-2">セットがありません。</p>
     }
 
-    <button type="button" class="btn btn-outline-primary btn-sm w-100" @onclick="AddSet">
+    <button type="button" class="btn btn-outline-primary btn-sm w-100 mb-2" @onclick="AddSet">
         + セットを追加
     </button>
+
+    <textarea class="form-control exercise-note" placeholder="メモ(フォームの気づきなど)"
+              value="@Exercise.Note" @onchange="OnNoteChanged"></textarea>
 </div>
 
 @code {
@@ -78,5 +81,10 @@
     {
         await State.RemoveExerciseAsync(ExerciseIndex);
         await OnExerciseRemoved.InvokeAsync();
+    }
+
+    private async Task OnNoteChanged(ChangeEventArgs e)
+    {
+        await State.UpdateExerciseNoteAsync(ExerciseIndex, e.Value?.ToString() ?? "");
     }
 }

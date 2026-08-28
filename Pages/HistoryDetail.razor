@@ -46,6 +46,10 @@ else
                     }
                 </tbody>
             </table>
+            @if (!string.IsNullOrEmpty(exercise.Note))
+            {
+                <p class="exercise-note-view">メモ: @exercise.Note</p>
+            }
         </div>
     }
 }
